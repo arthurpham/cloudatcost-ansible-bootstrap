@@ -1,0 +1,8 @@
+---
+###############################################################################
+# DO NOT EDIT. Set your variables in `vars/user.yml` instead. This is a
+# reference of all the variables.
+###############################################################################
+
+## crypted password, generated on a Linux box using: echo 'import crypt,getpass; print crypt.crypt(getpass.getpass(), "$6$AC3bdCF7!")' | python -  
+# deploy_password: TODO

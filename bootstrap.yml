@@ -1,0 +1,46 @@
+---
+-
+  # do some basic setup and create a standard deployment user
+  user: root
+  hosts: newservers
+
+  tasks:
+  - hostname: name={{ inventory_hostname }}
+
+  - name: install selinux bindings
+    yum: name=libselinux-python state=present
+
+  # set hostname in /etc/hosts, as ansible doesn't do that :/
+  - lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' line="127.0.1.1 {{ inventory_hostname }}" owner=root group=root mode=0644 insertafter='^127\.0\.0\.1'
+
+  - lineinfile: dest=/etc/sudoers 
+        regexp="^%wheel" 
+        line="%wheel   ALL=(ALL)       ALL" 
+        state=present
+
+  - user: name=deploy
+          uid=3000
+          groups=wheel
+          shell=/bin/bash
+          password={{ deploy_password }}
+
+  - authorized_key: user=deploy 
+     key="{{ lookup('file', 'deploy.pub') }}"
+
+  - lineinfile: dest=/etc/ssh/sshd_config 
+        regexp="^PermitRootLogin" 
+        line="PermitRootLogin no" 
+        state=present
+        backrefs=yes
+    notify: Restart sshd
+
+  - lineinfile: dest=/etc/ssh/sshd_config 
+        regexp="^PasswordAuthentication" 
+        line="PasswordAuthentication no" 
+        state=present
+    notify: Restart sshd
+
+  handlers:
+  #daemon is sshd, init is ssh
+  - name: Restart sshd
+    action: service name=sshd state=restarted
